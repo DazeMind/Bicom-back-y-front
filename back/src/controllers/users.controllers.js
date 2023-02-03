@@ -3,22 +3,45 @@ import {getConnection} from "./../database/database"
 import { jwt } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-const TOKEN_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJhZG1pbkBkYW5ueS5jbCJ9.bjRmsnvMt1Luvg4dH-qFcsRS8tnu7pkt7tiOIvwK4nk";
 
-// const verifyToken = (req, res, next) => {
-//     const authHeader = req.headers['authorization'];
-//     const token = authHeader && authHeader.split('')[1];
-//     console.log(authHeader);
-//     if (token==null) 
-//         return res.status(401).send("Token Required");
-//     jwt.verify(token, TOKEN_KEY, (err, user)=>{
-//         if (err) return res.status(403).send("Invalid token");
-//         console.log(user);
-//         req.user = user;
-//         next();
-//     });
-// }
+const generatorJWT = (id , name) =>{
+    return new Promise( (resolve, reject) => {
+        const payload = {id, name};
+        jwt.sing(payload, process.env.SECRET_JWT_SEED, {
+            expiresIn: '2h'
+        },(err,token)=>{
+            if (err) {
+                console.log(err)
+                reject('failed to generate token')
+            }
+            resolve(token);
+        })
+    })
+}
 
+const loginUser = async (req,res) => {
+    try{
+        const { email, password } = req.body
+        if (email == null || password == null || password == "" ) {
+            res.status(400).json({message: "Bad request. please fill all field."})
+        }
+
+        const connection = await getConnection();
+        const login = await connection.query("SELECT * FROM users WHERE email = ? ",email) ;
+        
+        const validPassword = bcrypt.compareSync(password,login[0].password )
+        if (!validPassword) {
+            res.status(500)
+            res.send({message: "Invalid Password"});
+        }
+    
+        res.json({login})
+
+    }catch (error){
+        res.status(500)
+        res.send({message: "ERROR CONNECTING TO DATABASE"});
+    }
+}
 
 const getUsers = async (req, res)=>{
     try{
@@ -58,29 +81,12 @@ const registerUser = async (req,res) => {
         const connection = await getConnection();
         const result = await connection.query("INSERT INTO users SET ?", user);
         
-        res.send(result)
-    }catch (error){
+            //Generar JWT
+            const token = await generatorJWT(login[0].id,login[0].name)
+            res.json({result, token}) 
+        }catch (error){
         res.status(500)
-        restart.send("INTERNAL SERVER ERROR")
-    }
-}
-
-const loginUser = async (req,res) => {
-    try{
-        const { email, password } = req.body
-        if (email == null || password == null || password == "" ) {
-            res.status(400).json({message: "Bad request. please fill all field."})
-        }
-
-        const connection = await getConnection();
-        const login = await connection.query("SELECT * FROM users WHERE email = ? ",email) ;
-        const passwordHashed =  await connection.query("SELECT password FROM users WHERE email = ? ",email)
-
-        res.json({login, passwordHashed})
-
-    }catch (error){
-        res.status(500)
-        res.send({message: "INTERNAL SERVER ERROR"});
+        restart.send("ERROR CONNECTING TO DATABASE")
     }
 }
 

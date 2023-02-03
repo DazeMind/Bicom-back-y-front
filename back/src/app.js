@@ -18,7 +18,6 @@ app.use(express.json())
 app.use(cors())
 
 //routes
-
 app.use("/api/products", productsRoutes)
 app.use("/api/categories", categoriesRoute)
 app.use("/api/users", usersRoute)
