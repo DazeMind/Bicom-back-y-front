@@ -2,7 +2,7 @@
 Prueba Tecnica Backend NodeJS y Frontend ReactJS
 
 Carpeta Front corresponde a REACT JS (comandos de ejecucion npm i, npm start) 
-Carpeta Back corresponde a NODE JS ccback (comandos de ejecucion npm i, npm run dev)
+Carpeta Back corresponde a NODE JS (comandos de ejecucion npm i, npm run dev)
 
 dependencias instaladas NODEJS
 dotenv express promise-mysql 
